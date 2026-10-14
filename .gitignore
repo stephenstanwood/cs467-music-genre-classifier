@@ -218,3 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local datasets and generated features
+/data/raw/
+/data/processed/
+.DS_Store
