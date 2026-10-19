@@ -1,7 +1,0 @@
-track_id,path,genre,split,reason,source
-98565,data/raw/fma_small/098/098565.mp3,Hip-Hop,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
-98567,data/raw/fma_small/098/098567.mp3,Hip-Hop,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
-98569,data/raw/fma_small/098/098569.mp3,Hip-Hop,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
-99134,data/raw/fma_small/099/099134.mp3,Electronic,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
-108925,data/raw/fma_small/108/108925.mp3,Rock,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
-133297,data/raw/fma_small/133/133297.mp3,Experimental,training,Known short or unreadable FMA clip; failed the SoundFile audit.,https://github.com/mdeff/fma/issues/8
