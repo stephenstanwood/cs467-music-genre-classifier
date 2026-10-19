@@ -1,2 +1,5 @@
 pandas
 soundfile
+librosa>=0.10
+numpy
+matplotlib
