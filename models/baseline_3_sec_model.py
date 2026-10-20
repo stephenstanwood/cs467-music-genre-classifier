@@ -22,7 +22,7 @@ groups_gtzan = df_gtzan["filename"].str.replace(
 )
 
 # PREPROCESSED
-df_pre = pd.read_csv("Data/preprocessed_gtzan_57_features.csv")
+df_pre = pd.read_csv("Data/gtzan_57_features.csv")
 
 x_pre = df_pre.drop(columns=["filename", "song_id", "segment", "label"])
 y_pre = df_pre["label"]
