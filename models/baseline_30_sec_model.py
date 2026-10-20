@@ -10,7 +10,7 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay)
 
 
-# BASELINE MODEL
+# BASELINE MODEL WITH 57_FEATURES_30_SEC MODEL
 # References: Kaavya Mahajan, "Training a TensorFlow model 
 # for predicting the Genres of Popular Songs"
 
