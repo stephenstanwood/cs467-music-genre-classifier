@@ -21,14 +21,18 @@ groups_gtzan = df_gtzan["filename"].str.replace(
     r"\.\d+\.wav$", "", regex=True
 )
 
-# PREPROCESSED
-df_pre = pd.read_csv("Data/gtzan_57_features.csv")
+# PREPROCESSED 57-feature dataset with Dawson's splits
+df_pre = pd.read_csv("Data/gtzan_57_features_split.csv")
 
-x_pre = df_pre.drop(columns=["filename", "song_id", "segment", "label"])
+exclude_columns = [
+    "filename", "song_id", "segment", "label", "split"
+]
+
+x_pre = df_pre.drop(columns=exclude_columns)
 y_pre = df_pre["label"]
-
-# Keep song IDs for group-aware splitting
 groups_pre = df_pre["song_id"]
+
+x_pre = x_pre[x_gtzan.columns]
 
 # ==================== SPLIT GTZAN ====================
 
@@ -64,7 +68,8 @@ groups_pre = df_pre["song_id"]
 
 # ==================== SPLIT PREPROCESSED ====================
 
-# First: separate the test set by song
+# NOTE: Use double splits if not using Dawson's .csv splits
+""" # First: separate the test set by song
 (
     x_pre_train_val,
     x_pre_test,
@@ -92,7 +97,25 @@ groups_pre = df_pre["song_id"]
     groups_pre_train_val,
     test_size=0.2,
     random_state=43
-)
+) """
+
+# Using Dawson's split.csv
+train_pre = df_pre[df_pre["split"] == "train"]
+val_pre = df_pre[df_pre["split"] == "val"]
+test_pre = df_pre[df_pre["split"] == "test"]
+
+x_pre_train = train_pre[x_gtzan.columns]
+y_pre_train = train_pre["label"]
+
+x_pre_val = val_pre[x_gtzan.columns]
+y_pre_val = val_pre["label"]
+
+x_pre_test = test_pre[x_gtzan.columns]
+y_pre_test = test_pre["label"]
+
+groups_pre_train = train_pre["song_id"]
+groups_pre_val = val_pre["song_id"]
+groups_pre_test = test_pre["song_id"]
 
 # ==================== SCALE FEATURES ====================
 
