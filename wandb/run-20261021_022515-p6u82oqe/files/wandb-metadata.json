@@ -1,0 +1,31 @@
+{
+  "os":  "Linux-6.8.0-1064-azure-x86_64-with-glibc2.39",
+  "python":  "CPython 3.14.2",
+  "startedAt":  "2026-10-21T02:25:15.419848Z",
+  "program":  "/workspaces/cs467-music-genre-classifier/Utilities and Architecture/Weights and Biases Experiments",
+  "codePath":  "Utilities and Architecture/Weights and Biases Experiments",
+  "codePathLocal":  "Utilities and Architecture/Weights and Biases Experiments",
+  "git":  {
+    "remote":  "https://github.com/stephenstanwood/cs467-music-genre-classifier",
+    "commit":  "975f592c2578f5767fb071d0dcfa6a47a989eeb8"
+  },
+  "email":  "dawson.herrington@outlook.com",
+  "root":  "/workspaces/cs467-music-genre-classifier",
+  "host":  "codespaces-4cd715",
+  "executable":  "/home/codespace/.python/current/bin/python",
+  "cpu_count":  1,
+  "cpu_count_logical":  2,
+  "disk":  {
+    "/":  {
+      "total":  "33636024320",
+      "used":  "20581076992"
+    }
+  },
+  "memory":  {
+    "total":  "8328077312"
+  },
+  "cpu":  {
+    "model":  "AMD EPYC 7763 64-Core Processor"
+  },
+  "writerId":  "01a15c46-f0a4-7de0-9358-7f436dd329fb"
+}

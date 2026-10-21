@@ -9,6 +9,11 @@
 # Justification: I chose an 80/10/10 split to have maximum training data to begin our models with
 # This can be revisited in the future
 
+# Citation
+# Claude assisted a series of inquiries relating to the use of pandas and documentation for tasks related to 
+# the CSV library. I had previously used manual CSV processing and used the AI to help me identify important methods
+# I would need.
+
 # imports
 import csv
 import pandas as pd
@@ -19,7 +24,7 @@ from pathlib import Path
 input_csv = Path(__file__).parent.parent / "Data" / "gtzan_57_features.csv"
 
 # output path
-output_path = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split.csv"
+output_path = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split_8_10_10.csv"
 
 # create a random seed
 random_seed = 46
