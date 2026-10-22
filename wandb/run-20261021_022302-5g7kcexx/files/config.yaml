@@ -1,0 +1,67 @@
+_wandb:
+    value:
+        cli_version: 0.31.0
+        e:
+            01a15c44-e880-769f-9ce5-35c82fc1853f:
+                codePath: Utilities and Architecture/Weights and Biases Experiments
+                codePathLocal: Utilities and Architecture/Weights and Biases Experiments
+                cpu:
+                    model: AMD EPYC 7763 64-Core Processor
+                cpu_count: 1
+                cpu_count_logical: 2
+                disk:
+                    /:
+                        total: "33636024320"
+                        used: "20580917248"
+                email: dawson.herrington@outlook.com
+                executable: /home/codespace/.python/current/bin/python
+                git:
+                    commit: 975f592c2578f5767fb071d0dcfa6a47a989eeb8
+                    remote: https://github.com/stephenstanwood/cs467-music-genre-classifier
+                host: codespaces-4cd715
+                memory:
+                    total: "8328077312"
+                os: Linux-6.8.0-1064-azure-x86_64-with-glibc2.39
+                program: /workspaces/cs467-music-genre-classifier/Utilities and Architecture/Weights and Biases Experiments
+                python: CPython 3.14.2
+                root: /workspaces/cs467-music-genre-classifier
+                startedAt: "2026-10-21T02:23:02.262519Z"
+                writerId: 01a15c44-e880-769f-9ce5-35c82fc1853f
+        m:
+            - "1": epoch/epoch
+              "6":
+                - 3
+              "7": []
+            - "2": epoch/*
+              "5": 1
+              "6":
+                - 1
+              "7": []
+        python_version: 3.14.2
+        t:
+            "1":
+                - 2
+                - 3
+                - 5
+                - 53
+            "2":
+                - 2
+                - 3
+                - 5
+                - 53
+            "3":
+                - 7
+                - 16
+                - 38
+            "4": 3.14.2
+            "5": 0.31.0
+            "12": 0.31.0
+            "13": linux-x86_64
+architecture:
+    value: dense-64
+batch_size:
+    value: 32
+epochs:
+    value: 30
+optimizer:
+    value: adam

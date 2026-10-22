@@ -1,0 +1,36 @@
+Overall File Requiremetns According to Project Plan for future implementation
+
+* WP3 or WAV File
+* Minimum length of 10 seconds
+* Maximum size of 10 MB
+* Automatic selection of middle 30 seconds for longer clips
+* Clear and specific error messages
+
+Design Architecture
+
+1.) Receive upload
+* FastAPI endpoint accepts File
+
+2.) Check for successful upload and/or presence of a File -> must be first
+* If no file is uploaded -> return error that no file was uploaded or found
+
+3.) Type and size checks -> computationally cheap task
+* First check for type (.mp3 or .wav), return error message clarifying type rules if not
+* Check for size of file, return error message clarifying 10 MB limit if not
+
+4.) Corruption verification -> should only be done after the lighter checks for optimization
+* Attempt to read with Librosa, if failure -> notify the user that the file is unreadable
+
+5.) Duration check
+* < 10 = error message
+* >= 10 = proceed, consider success message
+* >= 30 = select/trim for middle 30 seconds
+
+6a.) completed checks
+* success message
+* pass to preprocessing pipeline -> model -> results
+
+6b.) any failures
+* Specific error messages
+* Do not continue to pipeline
+* Place into error log for future testing and debugging
