@@ -24,7 +24,7 @@ from pathlib import Path
 input_csv = Path(__file__).parent.parent / "Data" / "gtzan_57_features.csv"
 
 # output path
-output_path = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split_8_10_10.csv"
+output_path = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split.csv"
 
 # create a random seed
 random_seed = 46
