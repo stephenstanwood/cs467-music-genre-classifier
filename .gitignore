@@ -225,3 +225,18 @@ __marimo__/
 .DS_Store
 Data/
 features/
+
+# PyCharm project settings
+.idea/
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local sample audio
+sample_music.ogg
+
+sample_audio/
