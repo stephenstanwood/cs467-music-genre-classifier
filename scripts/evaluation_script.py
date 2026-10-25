@@ -3,7 +3,7 @@
 # imports
 from datetime import datetime
 from pathlib import Path
-from pyexpat import model
+
 
 import pandas as pd
 import tensorflow as tf
@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 # load the saved model
 model_path = Path(__file__).parent.parent / "models" / "model.keras"
+model = tf.keras.models.load_model(model_path)
 
 # load in the test split
 csv_location = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split.csv"
@@ -30,6 +31,7 @@ train_df = df[df["split"] == "train"]
 test_df = df[df["split"] == "test"]
 
 scaler = StandardScaler()
+feature_columns = [col for col in df.columns if col not in ["filename", "song_id", "segment", "label", "split"]]
 scaler.fit(train_df[feature_columns])
 x_test_scaled = scaler.transform(test_df[feature_columns])
 
@@ -50,9 +52,23 @@ output_matrix = confusion_matrix(y_test_encoded, predicted_class_set)
 class_report = classification_report(y_test_encoded, predicted_class_set, target_names=label_encoder.classes_)
 
 # save to Evaluation Logs Folder
-time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+time = datetime.now().strftime("%Y-%m-%d %I:%M %p")
 
-folder = Path(__file__).parent.parent / "Evaluation_Logs"
+folder = Path(__file__).parent.parent / "Evaluation Logs" / time
 folder.mkdir()
 
+# add report txt file into folder
+with open(folder / "report.txt", "w") as f:
+    f.write(loss_acc_output_string + "\n\n")
+    f.write(class_report)
 
+# generate confusion matrix .png to folder
+completed_matrix = ConfusionMatrixDisplay(output_matrix, display_labels=label_encoder.classes_)
+
+completed_matrix.plot()
+
+# adjust x-axis for space
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+
+plt.savefig(folder / "confusion_matrix.png")
