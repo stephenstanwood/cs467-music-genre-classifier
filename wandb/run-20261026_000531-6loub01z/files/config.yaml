@@ -1,0 +1,48 @@
+_wandb:
+    value:
+        cli_version: 0.31.0
+        e:
+            01a17586-d0b8-7efc-89e7-418984a2f3b6:
+                codePath: scripts/evaluation_script.py
+                codePathLocal: scripts/evaluation_script.py
+                cpu:
+                    model: AMD EPYC 7763 64-Core Processor
+                cpu_count: 1
+                cpu_count_logical: 2
+                disk:
+                    /:
+                        total: "33636024320"
+                        used: "17171095552"
+                email: dawson.herrington@outlook.com
+                executable: /usr/local/python/3.14.2/bin/python
+                git:
+                    commit: 957b8586b0fc4731e943d6cdad62f40c57b3b181
+                    remote: https://github.com/stephenstanwood/cs467-music-genre-classifier
+                host: codespaces-d8a1d5
+                memory:
+                    total: "8328077312"
+                os: Linux-6.8.0-1064-azure-x86_64-with-glibc2.39
+                program: /workspaces/cs467-music-genre-classifier/scripts/evaluation_script.py
+                python: CPython 3.14.2
+                root: /workspaces/cs467-music-genre-classifier
+                startedAt: "2026-10-26T00:05:31.954373Z"
+                writerId: 01a17586-d0b8-7efc-89e7-418984a2f3b6
+        m: []
+        python_version: 3.14.2
+        t:
+            "1":
+                - 2
+                - 3
+                - 5
+                - 53
+            "2":
+                - 2
+                - 3
+                - 5
+                - 53
+            "3":
+                - 2
+            "4": 3.14.2
+            "5": 0.31.0
+            "12": 0.31.0
+            "13": linux-x86_64
