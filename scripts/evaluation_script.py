@@ -4,7 +4,6 @@
 from datetime import datetime
 from pathlib import Path
 
-
 import pandas as pd
 import tensorflow as tf
 
@@ -16,6 +15,13 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
+
+import wandb
+from wandb.integration.keras import WandbMetricsLogger, WandbModelCheckpoint
+
+# init wandb
+run = wandb.init(project="music-genre-classifier", job_type="evaluation")
+
 
 # load the saved model
 model_path = Path(__file__).parent.parent / "models" / "model.keras"
@@ -51,8 +57,16 @@ output_matrix = confusion_matrix(y_test_encoded, predicted_class_set)
 
 class_report = classification_report(y_test_encoded, predicted_class_set, target_names=label_encoder.classes_)
 
+# log metrics to wandb
+# After you have the metrics, log them
+wandb.log({
+    "test_loss": loss,
+    "test_accuracy": accuracy,
+})
+
+
 # save to Evaluation Logs Folder
-time = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+time = datetime.now().strftime("%Y-%m-%d_%I-%M%p")
 
 folder = Path(__file__).parent.parent / "Evaluation Logs" / time
 folder.mkdir()
@@ -61,6 +75,11 @@ folder.mkdir()
 with open(folder / "report.txt", "w") as f:
     f.write(loss_acc_output_string + "\n\n")
     f.write(class_report)
+
+print(run.url)
+# link file
+with open(folder / "wandb_link.txt", "w") as f:
+    f.write(run.url)
 
 # generate confusion matrix .png to folder
 completed_matrix = ConfusionMatrixDisplay(output_matrix, display_labels=label_encoder.classes_)
@@ -72,3 +91,6 @@ plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 
 plt.savefig(folder / "confusion_matrix.png")
+
+# finish wandb
+wandb.finish()
