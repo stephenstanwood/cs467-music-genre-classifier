@@ -1,3 +1,9 @@
+# Course: CS 467 - Online Capstone Project
+# Project: Top-n Music Genre Classification Neural Network
+# Team: Sam Davidson, Dawson Ross Herrington, Ashcon Khoubyari,
+#       Gianno Mari Rodriguez, Stephen Stanwood
+# Description: Evaluates a saved model and records its results.
+
 # Written by Dawson Herrington to automated creation of model evaluation metrics through scikit
 
 # imports
@@ -65,11 +71,10 @@ wandb.log({
 })
 
 
-# save to Evaluation Logs Folder
-time = datetime.now().strftime("%Y-%m-%d_%I-%M%p")
-
+# create the parent folder and keep each evaluation's results separate.
+time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
 folder = Path(__file__).parent.parent / "Evaluation Logs" / time
-folder.mkdir()
+folder.mkdir(parents=True)
 
 # add report txt file into folder
 with open(folder / "report.txt", "w") as f:
