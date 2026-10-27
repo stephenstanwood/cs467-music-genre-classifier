@@ -1,0 +1,31 @@
+{
+  "os":  "Linux-6.8.0-1064-azure-x86_64-with-glibc2.39",
+  "python":  "CPython 3.14.2",
+  "startedAt":  "2026-10-25T23:51:52.621257Z",
+  "program":  "/workspaces/cs467-music-genre-classifier/scripts/evaluation_script.py",
+  "codePath":  "scripts/evaluation_script.py",
+  "codePathLocal":  "scripts/evaluation_script.py",
+  "git":  {
+    "remote":  "https://github.com/stephenstanwood/cs467-music-genre-classifier",
+    "commit":  "34bef18e0ce0ac0e10c4b1345cea1de6e5a2946e"
+  },
+  "email":  "dawson.herrington@outlook.com",
+  "root":  "/workspaces/cs467-music-genre-classifier",
+  "host":  "codespaces-d8a1d5",
+  "executable":  "/usr/local/python/3.14.2/bin/python",
+  "cpu_count":  1,
+  "cpu_count_logical":  2,
+  "disk":  {
+    "/":  {
+      "total":  "33636024320",
+      "used":  "17169203200"
+    }
+  },
+  "memory":  {
+    "total":  "8328077312"
+  },
+  "cpu":  {
+    "model":  "AMD EPYC 7763 64-Core Processor"
+  },
+  "writerId":  "01a1757a-5032-7c7e-9e6e-8357cf4ffe5f"
+}

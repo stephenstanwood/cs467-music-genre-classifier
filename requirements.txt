@@ -6,3 +6,5 @@ matplotlib
 fastapi
 uvicorn
 python-multipart
+wandb
+scikit-learn

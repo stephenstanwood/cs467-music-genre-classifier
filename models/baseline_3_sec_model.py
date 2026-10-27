@@ -1,5 +1,6 @@
 from functions import *
-
+import wandb
+from wandb.integration.keras import WandbMetricsLogger
 
 # BASELINE MODEL WITH 57_FEATURES_3_SEC MODEL
 # Reference: Stack Overflow, "python split to 
@@ -163,6 +164,7 @@ print("GTZAN genres:", gtzan_label_encoder.classes_)
 print("PREPROCESSED genres:", pre_label_encoder.classes_)
 
 # ===================== NEURAL NETWORK ===========================
+run = wandb.init(project="music-genre-classifier", job_type="training")
 
 # Model 1: GTZAN Features
 model_gtzan = build_model(
@@ -176,7 +178,9 @@ history_gtzan = model_gtzan.fit(
     y_gtzan_train_enc,
     epochs=30,
     batch_size=32,
-    validation_data=(x_gtzan_val_sc, y_gtzan_val_enc)
+    validation_data=(x_gtzan_val_sc, y_gtzan_val_enc),
+
+    callbacks=[WandbMetricsLogger()]
 )
 
 # Model 2: PREPROCESSED Features
@@ -191,7 +195,9 @@ history_pre = model_pre.fit(
     y_pre_train_enc,
     epochs=30,
     batch_size=32,
-    validation_data=(x_pre_val_sc, y_pre_val_enc)
+    validation_data=(x_pre_val_sc, y_pre_val_enc),
+
+    callbacks=[WandbMetricsLogger()]
 )
 
 # ====================== EVALUATE MODEL ===========================
@@ -213,3 +219,4 @@ pre_results = evaluate_model(
     plot=True
 )
 
+wandb.finish()
