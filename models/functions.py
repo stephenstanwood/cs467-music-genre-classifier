@@ -1,15 +1,46 @@
 import pandas as pd
 import numpy as np
+import tensorflow as tf
 import matplotlib.pyplot as plt
-from tensorflow.keras import models, layers
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GroupShuffleSplit
+from tensorflow.keras import (
+    models, 
+    layers, 
+    regularizers)
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from sklearn.model_selection import train_test_split, GroupShuffleSplit
+from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
-    ConfusionMatrixDisplay
-)
+    ConfusionMatrixDisplay)
+
+
+"""
+
+functions.py
+
+Contains reusable helper functions for music genre classification.
+
+Functions include:
+
+* data splitting
+* audio segments splitting
+* feature scaling
+* model building
+* training callbacks
+* class weighting
+* model evaluation
+
+Dependencies:
+    pandas
+    numpy
+    tensorflow
+    matplotlib
+    scikit-learn
+
+"""
+
 
 def split_data(x, y, test_size=0.2, random_state=42):
     """
@@ -27,6 +58,9 @@ def split_data(x, y, test_size=0.2, random_state=42):
 
     Returns:
         x_train, x_test, y_train, y_test
+
+    Reference: Stack Overflow, python split to 
+    train/test/val using GroupShuffleSplit
     """
     return train_test_split(
         x,
@@ -35,6 +69,7 @@ def split_data(x, y, test_size=0.2, random_state=42):
         random_state=random_state,
         stratify=y
     )
+
 
 def split_by_song(x, y, groups, test_size=0.2, random_state=42):
     """
@@ -77,6 +112,7 @@ def split_by_song(x, y, groups, test_size=0.2, random_state=42):
         groups.iloc[test_idx]
     )
 
+
 def scale_features(x_train, x_val=None, x_test=None):
     """
     Scale training and test data using StandardScaler.
@@ -107,7 +143,8 @@ def scale_features(x_train, x_val=None, x_test=None):
 
     return x_train_sc, x_val_sc, x_test_sc, scaler
 
-def build_model(shape=57, dense_1=64, dense_2=10):
+
+def build_model(shape=57, dense_1=64, dense_2=10, num_classes=10):
     """
     Build and compile a fully connected neural network 
     for music genre classification.
@@ -116,31 +153,138 @@ def build_model(shape=57, dense_1=64, dense_2=10):
         shape (int): Number of input features.
         Defaults to 57.
 
-        dense_1 (int): Number of neurons in the hidden Dense layer.
+        dense_1 (int): Number of neurons in the
+        first hidden layer.
         Defaults to 64.
 
-        dense_2 (int): Number of output units,
-        typically one per genre class.
+        dense_2 (int): Number of neurons in the
+        second hidden layer.
+        Defaults to 10.
+
+        num_classes (int): Number of genre classes to predict.
+        Determines the number of neurons in the output layer.
         Defaults to 10.
 
     Returns:
         A compiled Keras Sequential model using the Adam optimizer,
         sparse categorical cross-entropy loss, and accuracy metric.
+
+        # Settings:
+           
+                # L2 regularization penalizes large weights to help reduce overfitting.
+                # Larger L2 values apply a stronger penalty.
+                # L2 Value:
+                # 0         No L2 Regularization
+                # 0.0001    Weak
+                # 0.001     Stronger
+                # 0.01      Harshest
+        
+                # Randomly drops of activations during training.
+                # 20% (0.2) for the first hidden layer
+                # 10% (0.1) for the second hidden layer
+        
+                # Optimizer: Adam (Adaptive Moment Estimation)
+                # Learning Rate:
+                # 0.01          (unstable)
+                # 0.001         (common)
+                # 0.0001        (smaller updates)
+
+    References: 
+    Keras, Layer weight regularizers
+    Keras, Model training APIs
+    Stack Overflow, Setting the learning rate in convolutional neural network
+    Stack Overflow, How to do Multiclass classification with Keras?
     """
 
     model = models.Sequential([
-    layers.Input(shape=(shape,)),
-    layers.Dense(dense_1, activation="relu"),
-    layers.Dense(dense_2, activation="softmax")
+
+        # Input layer: receives the audio feature vector (57 features by default)
+        layers.Input(shape=(shape,)),
+
+        # First hidden layer.
+        layers.Dense(
+            dense_1, 
+            activation="relu",
+            kernel_regularizer=regularizers.l2(0.001)
+        ),
+
+        layers.Dropout(0.2),
+
+        # Second hidden layer
+        layers.Dense(
+            dense_2, 
+            activation="relu",
+            kernel_regularizer=regularizers.l2(0.001)
+        ),
+        layers.Dropout(0.1),
+     
+        # Output layer: one neuron per genre class
+        layers.Dense(num_classes, activation="softmax")
     ])
 
     model.compile(
-        optimizer="adam",
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
-    )
+    optimizer=tf.keras.optimizers.Adam(
+        learning_rate=0.0005
+    ),
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
 
     return model
+
+
+def callbacks():
+    """
+    Initializes early stopping and learning rate reduction callbacks.
+    Use the returned list in the model.fit() callbacks parameter.
+
+    Returns:
+        list: EarlyStopping, ReduceLROnPlateau
+    """
+
+    early_stopping = EarlyStopping(
+    monitor="val_loss",
+    patience=8,
+    restore_best_weights=True,
+    verbose=1
+    )
+
+    reduce_lr = ReduceLROnPlateau(
+    monitor="val_loss",
+    factor=0.5,
+    patience=3,
+    min_lr=1e-6,
+    verbose=1
+    )
+
+    return [early_stopping, reduce_lr]
+
+
+def get_class_weights(labels_encoded):
+    """
+    Calculate class weights to help address imbalanced training data.
+
+    Parameters:
+        labels_encoded: Encoded genre labels encoded using LabelEncoder
+
+    Returns:
+        dict: Class labels mapped to their calculated weights.
+    
+    Reference:
+    Stack Overflow, Compute class weight function issue in 'sklearn' 
+    library when used in 'Keras' classification.
+    """
+
+    classes = np.unique(labels_encoded)
+
+    weights = compute_class_weight(
+    class_weight="balanced",
+    classes=classes,
+    y=labels_encoded
+    )
+
+    return dict(zip(classes, weights))
+
 
 def evaluate_model(model, x_test, y_test, label_encoder,
                    title="Model", plot=True):
@@ -151,7 +295,7 @@ def evaluate_model(model, x_test, y_test, label_encoder,
     Optionally displays a confusion matrix.
 
     Parameters:
-        model: The trained neural network model
+        model: The trained neural network model.
     
         x_test: The test dataset containing the input features.
     
@@ -212,3 +356,4 @@ def evaluate_model(model, x_test, y_test, label_encoder,
         "probabilities": probabilities,
         "confusion_matrix": cm
     }
+
