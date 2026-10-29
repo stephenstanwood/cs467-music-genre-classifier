@@ -1,5 +1,12 @@
-from functions import *
+# Course: CS 467 - Online Capstone Project
+# Project: Top-n Music Genre Classification Neural Network
+# Team: Sam Davidson, Dawson Ross Herrington, Ashcon Khoubyari,
+#       Gianno Mari Rodriguez, Stephen Stanwood
+# Description: Trains and compares the 3-second baseline models.
 
+from functions import *
+import wandb
+from wandb.integration.keras import WandbMetricsLogger
 
 # BASELINE MODEL WITH 57_FEATURES_3_SEC MODEL
 
@@ -198,6 +205,7 @@ print("GTZAN genres:", gtzan_label_encoder.classes_)
 print("PREPROCESSED genres:", pre_label_encoder.classes_)
 
 # ===================== NEURAL NETWORK ===========================
+run = wandb.init(project="music-genre-classifier", job_type="training")
 
 # Model 1: GTZAN Features
 model_gtzan = build_model(
@@ -213,9 +221,8 @@ history_gtzan = model_gtzan.fit(
     epochs=100,
     batch_size=32,
     validation_data=(x_gtzan_val_sc, y_gtzan_val_enc),
-    callbacks=callbacks(),
-    verbose=1
-)
+    callbacks=callbacks() + [WandbMetricsLogger()],
+    verbose=1)
 
 # Model 2: PREPROCESSED Features
 model_pre = build_model(
@@ -231,10 +238,9 @@ history_pre = model_pre.fit(
     epochs=100,
     batch_size=32,
     validation_data=(x_pre_val_sc, y_pre_val_enc),
-    callbacks=callbacks(),
+    callbacks=callbacks() + [WandbMetricsLogger()],
     class_weight=get_class_weights(y_pre_train_enc),
-    verbose=1
-)
+    verbose=1)
 
 # ====================== EVALUATE MODEL ===========================
 
@@ -303,3 +309,4 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
+wandb.finish()
