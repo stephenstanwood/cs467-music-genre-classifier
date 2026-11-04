@@ -63,3 +63,32 @@ script stops for review if a future audit flags a different set of tracks.
 
 Raw datasets, processed features, and the virtual environment stay local
 and are excluded from Git.
+
+## GTZAN Mel training-data loader
+
+Save the team's shared `gtzan_mels.npz` cache in `Data/`.
+With the virtual environment active, run:
+
+    python scripts/load_training_data.py Data/gtzan_mels.npz
+
+The loader checks array shapes, metadata, genre labels, and song-level
+split assignments. It returns training and validation data with input
+shape `(segments, 128, 130, 1)`. Genre numbers follow the returned
+`genres` list, which is built from training labels. Cached spectrogram
+values are preserved, and held-out test arrays are excluded from the return value.
+
+The November 4 cache check produced:
+
+| Split | Songs | Segments |
+| --- | ---: | ---: |
+| Training | 799 | 7,990 |
+| Validation | 100 | 1,000 |
+
+Training contains 790 jazz segments and 800 segments for each other genre.
+Validation contains 100 segments for each of the ten genres.
+
+Run the loader tests with:
+
+    python -m unittest discover -s tests -p 'test_load_training_data.py' -v
+
+These tests use a small generated cache and do not require the full dataset.
