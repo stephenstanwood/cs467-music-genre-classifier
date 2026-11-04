@@ -92,3 +92,30 @@ Run the loader tests with:
     python -m unittest discover -s tests -p 'test_load_training_data.py' -v
 
 These tests use a small generated cache and do not require the full dataset.
+
+## Prediction API
+
+Start the server with:
+
+    python -m uvicorn app:app --reload
+
+Send an MP3 or WAV file to `POST /predict?n=5` using the multipart field
+`file`. The upload limit is 10 MB. The requested number of genres can
+range from 1 to 8, with 5 as the default.
+
+The route averages scores across segments and returns a `predictions`
+list containing `genre` and `confidence`, plus the number of `segments`.
+Confidence values range from zero to one. Selecting fewer genres does
+not rescale their scores.
+
+The saved model and matching preprocessing still need to be connected
+in `predict_file()`. Until then, requests that pass the upload checks
+return 503. Audio decoding, duration checks, and selection of the middle
+30 seconds remain part of that connection.
+
+Install the test dependencies and run all tests with:
+
+    python -m pip install -r requirements-dev.txt
+    python -m unittest discover -s tests -v
+
+API tests use fixed model scores and do not require a trained model.

@@ -1,3 +1,9 @@
+# Course: CS 467 - Online Capstone Project
+# Project: Top-n Music Genre Classification Neural Network
+# Team: Sam Davidson, Dawson Ross Herrington, Ashcon Khoubyari,
+#       Gianno Mari Rodriguez, Stephen Stanwood
+# Description: Serves the web interface and audio API routes.
+
 """Small Python server for the Top N Genre Music Classifier interface."""
 
 from io import BytesIO
@@ -13,6 +19,8 @@ import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
+
+from scripts.prediction_api import router as prediction_router
 
 app = FastAPI(title="Top N Genre Music Classifier")
 BASE_DIR = Path(__file__).resolve().parent
@@ -77,6 +85,9 @@ async def create_spectrogram(file: UploadFile = File(...)):
             temporary_path.unlink(missing_ok=True)
 
 
+app.include_router(prediction_router)
+
+
 # Serve the HTML, CSS, and JavaScript from this same Python server.
-# Keep this last so it does not interfere with /spectrogram.
+# Keep this last so the API routes are checked first.
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
