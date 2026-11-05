@@ -6,7 +6,6 @@ from functions import *
 # for predicting the Genres of Popular Songs"
 
 """
-
 Training the Model Using GTZAN 57 Features (30-Second Segments)
 
 Pipeline:
@@ -35,7 +34,6 @@ Dataset: features_30_sec.csv
 
 * Test Accuracy: 70.50% - 74.50%
 * Test Loss: 1.0275 - 1.0674 
-
 """
 
 
@@ -78,9 +76,8 @@ y_test_encoded = label_encoder.transform(y_test)
 
 # ===================== NEURAL NETWORK ===========================
 # Build Model
-# Input: 57 Audio Features
-# 64 Neurons, ReLU: Rectified Linear Unit
-# softmax: Converts scores into probabilities totaling 1
+# Two Hidden layers 64 neurons each
+# Output layer: one neuron per genre label (10 in this case)
 
 model = build_model(
     shape=x_train_scaled.shape[1],
@@ -89,11 +86,9 @@ model = build_model(
     num_classes=len(label_encoder.classes_)
 )
 
-
 # Train Model
-# epochs=30: Passes through training data up to 30 times
+# epochs=100: Trains on the dataset for up to 100 epochs
 # batch_size=32: Processes 32 training examples per batch
-# validation_split=0.2: Reserves 20% of training data for validation
 
 history = model.fit(
     x_train_scaled,
