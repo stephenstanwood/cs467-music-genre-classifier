@@ -17,28 +17,24 @@ from sklearn.metrics import (
 
 
 """
-
-functions.py
-
 Contains reusable helper functions for music genre classification.
 
 Functions include:
 
-* data splitting
-* audio segments splitting
-* feature scaling
-* model building
-* training callbacks
-* class weighting
-* model evaluation
+    * data splitting
+    * audio segments splitting
+    * feature scaling
+    * model building
+    * training callbacks
+    * class weighting
+    * model evaluation
 
 Dependencies:
-    pandas
-    numpy
-    tensorflow
-    matplotlib
-    scikit-learn
-
+    - pandas
+    - numpy
+    - tensorflow
+    - matplotlib
+    - scikit-learn
 """
 
 
@@ -169,25 +165,26 @@ def build_model(shape=57, dense_1=64, dense_2=10, num_classes=10):
         A compiled Keras Sequential model using the Adam optimizer,
         sparse categorical cross-entropy loss, and accuracy metric.
 
-        # Settings:
+        Settings:
            
                 # L2 regularization penalizes large weights to help reduce overfitting.
                 # Larger L2 values apply a stronger penalty.
                 # L2 Value:
-                # 0         No L2 Regularization
-                # 0.0001    Weak
-                # 0.001     Stronger
-                # 0.01      Harshest
+                    - 0         No L2 Regularization
+                    - 0.0001    Weak
+                    - 0.001     Stronger
+                    - 0.01      Harshest
         
-                # Randomly drops of activations during training.
-                # 20% (0.2) for the first hidden layer
-                # 10% (0.1) for the second hidden layer
+                # Randomly drops of activations during training:
+                    - 20% (0.2) for the first hidden layer
+                    - 10% (0.1) for the second hidden layer
         
                 # Optimizer: Adam (Adaptive Moment Estimation)
+
                 # Learning Rate:
-                # 0.01          (unstable)
-                # 0.001         (common)
-                # 0.0001        (smaller updates)
+                    - 0.01          (unstable)
+                    - 0.001         (common)
+                    - 0.0001        (smaller updates)
 
     References: 
     Keras, Layer weight regularizers
@@ -229,6 +226,115 @@ def build_model(shape=57, dense_1=64, dense_2=10, num_classes=10):
     loss="sparse_categorical_crossentropy",
     metrics=["accuracy"]
 )
+
+    return model
+
+
+def build_mel_cnn(num_classes=10):
+    """
+    Build and compile a Convolutional Neural Network (CNN)
+    for music genre classification using mel spectrograms.
+
+    Parameters:
+        num_classes (int): Number of genre classes to predict.
+        Determines the number of neurons in the output layer.
+        Defaults to 10.
+
+    Returns:
+        A compiled Keras Sequential model using the Adam optimizer,
+        sparse categorical cross-entropy loss, and accuracy metric.
+
+        Settings:
+
+            # Input Shape:
+                - (128, 130, 1)
+                - 128 mel frequency bins
+                - 130 time frames
+                - 1 channel (grayscale spectrogram)
+
+            # Convolutional Layers:
+            # CNN Layer 1
+                - 16 filters
+            # CNN Layer 2
+                - 32 filters
+            # CNN Layer 3
+                - 64 filters
+
+            # Kernel size: 3x3
+
+            # 'Same' padding preserves spatial dimensions.
+
+            # Batch Normalization:
+                - Normalizes layer activations to help stabilize training.
+
+            # ReLU:
+                - Introduces non-linearity into the network.
+
+            # MaxPooling:
+                - Reduces spatial dimensions while retaining important features.
+
+            # L2 Regularization:
+                - 0.0001 (weak regularization to help reduce overfitting).
+
+            # Dropout:
+                - 0.4 (randomly drops 40% of activations during training).
+
+            # Optimizer: Adam
+                - Learning Rate: 0.0005
+
+    References:
+        Keras, Convolutional Neural Network (CNN)
+        Keras, Simple Audio Recognition: Recognizing Keywords
+        Stack Overflow, How can I add new dimensions to a NumPy array?
+    """
+    
+    model = models.Sequential([
+
+        # Input: (128, 130) Default mel spectogram layer
+        layers.Input(shape=(128,130,1)),
+
+        # CNN layer 1
+        layers.Conv2D(16, kernel_size=3, padding="same"),
+        layers.BatchNormalization(),
+        layers.ReLU(),
+        layers.MaxPooling2D(pool_size=2),
+
+        # CNN layer 2
+        layers.Conv2D(32, kernel_size=3, padding="same"),
+        layers.BatchNormalization(),
+        layers.ReLU(),
+        layers.MaxPooling2D(pool_size=2),
+
+        # CNN layer 3
+        layers.Conv2D(64, kernel_size=3, padding="same"),
+        layers.BatchNormalization(),
+        layers.ReLU(),
+        layers.MaxPooling2D(pool_size=2),
+
+        # Classification
+        layers.GlobalAveragePooling2D(),
+
+        layers.Dense(
+            128,
+            activation="relu",
+            kernel_regularizer=regularizers.l2(0.0001)
+        ),
+
+        # Flatten into a vector
+        # layers.Flatten(),
+
+        layers.Dropout(0.4),
+
+        layers.Dense(num_classes, activation="softmax")
+    ])
+
+    # previous learning_rate=0.0005
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(
+            learning_rate=0.0005),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
 
     return model
 
@@ -306,8 +412,11 @@ def evaluate_model(model, x_test, y_test, label_encoder,
         encoded genre labels back into their original names.
 
     Returns:
-        A dictionary containing test loss, accuracy,
-        predictions, and the confusion matrix.
+        A dictionary containing:
+            - test loss
+            - accuracy
+            - predictions
+            - confusion matrix
     """
     loss, accuracy = model.evaluate(
         x_test, y_test, verbose=0
@@ -356,4 +465,66 @@ def evaluate_model(model, x_test, y_test, label_encoder,
         "probabilities": probabilities,
         "confusion_matrix": cm
     }
+
+
+def read_mel_cnn_acc(path, X_test, y_test, genre_labels):
+    """
+    Evaluate saved mel spectrogram CNN models using test data.
+
+    Parameters:
+        path (Path): Directory containing saved Keras (.keras) models.
+
+        X_test (numpy.ndarray): Test input data containing mel spectrograms.
+
+        y_test (numpy.ndarray): True encoded genre labels for the test data.
+
+        genre_labels (numpy.ndarray): Names of the genre classes.
+        Used to generate the classification report.
+
+    Returns:
+        A list of dictionaries containing each model's:
+            - Model filename
+            - Test accuracy (percentage)
+            - Test loss
+    """
+
+    results = []
+
+    for model_path in path.glob("*.keras"):
+
+        print(f"\n{'=' * 50}")
+        print(f"Evaluating: {model_path.name}")
+        print("=" * 50)
+
+        model = tf.keras.models.load_model(model_path)
+
+        loss, accuracy = model.evaluate(
+            X_test,
+            y_test,
+            verbose=0
+        )
+
+        predictions = model.predict(X_test, verbose=0)
+        predicted_classes = np.argmax(predictions, axis=1)
+
+        print(f"Test Accuracy: {accuracy * 100:.2f}%")
+        print(f"Test Loss: {loss:.4f}")
+
+        print("\nClassification Report:")
+
+        print(classification_report(
+            y_test,
+            predicted_classes,
+            labels=np.arange(len(genre_labels)),
+            target_names=genre_labels,
+            zero_division=0
+        ))
+
+        results.append({
+            "model": model_path.name,
+            "accuracy": accuracy * 100,
+            "loss": loss
+        })
+
+    return results
 
