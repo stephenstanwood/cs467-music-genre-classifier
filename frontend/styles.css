@@ -212,6 +212,16 @@ h2, h3, p { overflow-wrap: anywhere; }
   font-size: 27px;
 }
 
+.upload-zone.is-uploaded {
+  border-color: #87bf9b;
+  background: #f4fbf6;
+}
+
+.upload-zone.is-uploaded .upload-symbol {
+  background: #dff4e6;
+  color: #187143;
+}
+
 .upload-zone strong { font-size: 14px; }
 .upload-instruction { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .browse-link { color: var(--accent); font-weight: 700; }
@@ -321,10 +331,9 @@ h2, h3, p { overflow-wrap: anywhere; }
 .ring-two { transform: scale(2.1); }
 .art-note { z-index: 1; font-size: 28px; }
 
-.track-copy { min-width: 0; }
+.track-copy { flex: 1; min-width: 0; }
 .track-kicker { color: #8b95a9; font-size: 8px; font-weight: 700; letter-spacing: 1.1px; }
 .track-copy h3 { margin: 3px 0; font: 750 16px "Manrope", sans-serif; }
-.track-copy p { margin: 0; color: var(--muted); font-size: 10px; }
 
 .results-subheading {
   display: flex;
@@ -440,7 +449,7 @@ h2, h3, p { overflow-wrap: anywhere; }
 .primary-button:disabled { cursor: not-allowed; opacity: .55; }
 [hidden] { display: none !important; }
 .audio-visualization { margin-top: 22px; }
-#audio-player { display: block; width: 100%; margin: 0 0 18px; }
+#audio-player { display: block; width: 100%; margin: 10px 0 0; }
 .spectrogram-wrapper { background: #17132c; border-radius: 12px; padding: 12px; overflow: hidden; }
 #spectrogram { display: block; width: 100%; height: auto; }
 .audio-visualization .helper-text { margin-bottom: 4px; }
@@ -451,3 +460,93 @@ h2, h3, p { overflow-wrap: anywhere; }
 #spectrogram { width: 100%; height: auto; }
 .primary-button:disabled { cursor: not-allowed; opacity: .72; }
 .primary-button:not(:disabled) { cursor: pointer; opacity: 1; }
+
+.waveform-player:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #353c68;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #202749, #12162d);
+}
+
+.waveform-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.waveform-track canvas {
+  display: block;
+  width: 100%;
+  height: 80px;
+}
+
+.waveform-track input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.waveform-track:focus-within {
+  outline: 2px solid #b4d8ff;
+  outline-offset: 3px;
+}
+
+#play-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #b4d8ff;
+  cursor: pointer;
+}
+
+/* Play triangle. */
+#play-toggle::before {
+  content: "";
+  width: 15px;
+  height: 17px;
+  margin-left: 3px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+/* Two pause bars while the track is playing. */
+#play-toggle[data-playing="true"]::before {
+  width: 14px;
+  height: 16px;
+  margin-left: 0;
+  clip-path: none;
+  background: linear-gradient(
+    to right,
+    currentColor 0 36%,
+    transparent 36% 64%,
+    currentColor 64% 100%
+  );
+}
+
+#play-toggle:hover {
+  background: rgba(180, 216, 255, 0.12);
+}
+
+#play-toggle:active {
+  transform: scale(0.95);
+}
+
+#play-toggle:focus-visible {
+  outline: 2px solid #b4d8ff;
+  outline-offset: 4px;
+}
