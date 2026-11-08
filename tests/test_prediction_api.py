@@ -4,7 +4,9 @@
 #       Gianno Mari Rodriguez, Stephen Stanwood
 # Description: Tests prediction requests without a trained model.
 
+from io import BytesIO
 import unittest
+import wave
 from unittest.mock import patch
 
 import numpy as np
@@ -18,7 +20,19 @@ class TestPredictionAPI(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.addCleanup(self.client.close)
-        self.upload = {"file": ("clip.wav", b"test audio", "audio/wav")}
+        # Use ten seconds of valid audio to pass the upload checks.
+        audio = BytesIO()
+        with wave.open(audio, "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(8000)
+            wav.writeframes(b"\x00\x00" * 80000)
+        self.upload = {"file": ("clip.wav", audio.getvalue(), "audio/wav")}
+
+        # Keep test errors out of the upload log.
+        log_patch = patch("scripts.prediction_api.log_upload_error")
+        log_patch.start()
+        self.addCleanup(log_patch.stop)
         self.genres = ["blues", "jazz", "rock", "pop", "metal"]
 
         # Blues leads in the first segment; jazz leads after averaging both.
