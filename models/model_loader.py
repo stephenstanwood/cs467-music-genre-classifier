@@ -91,48 +91,47 @@ def select_model(model_name):
 
 def predict_genre(X, model_name, top_n=3):
     """
-    Generate top-N music genre predictions using a selected CNN model.
+    Generate Top-N music genre predictions using a selected CNN model.
 
-    Parameters:
-        X (numpy.ndarray): Preprocessed mel spectrogram input.
-
-        model_name (str): Name of the trained model to use.
-
-        models (dict): Dictionary containing loaded Keras models.
-
-        genre_labels (numpy.ndarray): Names of the genre classes.
-
-        top_n (int): Number of top predictions to return.
-        Defaults to 3.
+    Supports either a single mel spectrogram or multiple slices
+    belonging to the same song.
 
     Returns:
         A list of dictionaries containing predicted genres
-        and their confidence scores.
-
-    References:
-    Stack Overflow, Get top-N ranking indices and values, from numpy array
+        and their confidence scores as percentages.
     """
 
     if model_name not in MODELS:
         raise ValueError("Model not found.")
 
+    if top_n < 1 or top_n > len(GENRE_LABELS):
+        raise ValueError("Invalid top_n value.")
+
     model = MODELS[model_name]
 
+    # Add batch dimension for a single mel spectrogram
     if X.ndim == 3:
         X = np.expand_dims(X, axis=0)
 
-    predictions = model.predict(X, verbose=0)[0]
+    # Predict every slice
+    predictions = model.predict(X, verbose=0)
 
+    # Average predictions across all slices
+    predictions = np.mean(predictions, axis=0)
+
+    # Get Top-N genre indices
     top_indices = np.argsort(predictions)[::-1][:top_n]
 
     results = []
 
     for index in top_indices:
-
         results.append({
             "genre": str(GENRE_LABELS[index]),
             "confidence": float(predictions[index])
         })
 
-    return results
+    # Print predictions as percentages
+    for result in results:
+        print(f"{result['genre']}: {result['confidence']:.2%}")
 
+    return results
