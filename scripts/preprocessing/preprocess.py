@@ -37,8 +37,8 @@ FEATURE_COLUMNS = (
 MFCC_COLUMNS = [c for c in FEATURE_COLUMNS if c.startswith("mfcc")]  # the 40-column subset
  
 assert len(FEATURE_COLUMNS) == 57
- 
- 
+
+
 def load_audio(path, duration=None):
     """Load any audio file (WAV, MP3, ...) as mono at SAMPLE_RATE.
     Raises ValueError if the file is unreadable or silent."""
@@ -135,3 +135,10 @@ def find_middle(y, duration=UPLOAD_DURATION):
     half = (len(y) - target) // 2
     return y[half:half + target]
 
+
+def mels_for_file(path):
+    """Full pipeline for one file: load -> segment -> mel-spectrogram per segment.
+    Returns a list of 2D arrays, one per segment. This is the function the API
+    should call on user uploads."""
+    y = find_middle(load_audio(path))
+    return np.stack([mel_spectrogram(seg) for seg in split_into_segments(y)])
