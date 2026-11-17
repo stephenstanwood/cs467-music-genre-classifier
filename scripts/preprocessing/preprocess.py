@@ -21,7 +21,8 @@ N_MFCC = 20                # MFCC coefficients
 N_MELS = 128               # mel bands for the spectrogram CNN
 N_FFT = 2048
 HOP_LENGTH = 512
- 
+
+UPLOAD_DURATION = 30          # seconds, max length of user-uploaded audio
 SEGMENT_SAMPLES = SAMPLE_RATE * SEGMENT_SECONDS
  
 # Column order matches GTZAN's features_3_sec.csv so the two are comparable.
@@ -36,8 +37,8 @@ FEATURE_COLUMNS = (
 MFCC_COLUMNS = [c for c in FEATURE_COLUMNS if c.startswith("mfcc")]  # the 40-column subset
  
 assert len(FEATURE_COLUMNS) == 57
- 
- 
+
+
 def load_audio(path, duration=None):
     """Load any audio file (WAV, MP3, ...) as mono at SAMPLE_RATE.
     Raises ValueError if the file is unreadable or silent."""
@@ -124,4 +125,20 @@ def features_for_file(path, duration=None):
         row.update(extract_features(seg))
         rows.append(row)
     return rows
- 
+
+def find_middle(y, duration=UPLOAD_DURATION):
+    """Return the middle slice of audio, or the whole clip if shorter.
+    Matches GTZAN, whose clips are 30-second excerpts."""
+    target = duration * SAMPLE_RATE
+    if len(y) <= target:
+        return y
+    half = (len(y) - target) // 2
+    return y[half:half + target]
+
+
+def mels_for_file(path):
+    """Full pipeline for one file: load -> segment -> mel-spectrogram per segment.
+    Returns a list of 2D arrays, one per segment. This is the function the API
+    should call on user uploads."""
+    y = find_middle(load_audio(path))
+    return np.stack([mel_spectrogram(seg) for seg in split_into_segments(y)])
