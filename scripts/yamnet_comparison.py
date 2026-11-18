@@ -42,19 +42,30 @@ audio_folder = Path("/tmp/gtzan/Data/genres_original")
 # one averaged yamnet embedding per song
 embeddings, labels, splits = [], [], []
 
+# go through each song one at a time
+# n counts songs for the progress printout
 for n, (song_id, row) in enumerate(songs.iterrows(), 1):
+    # load the song's audio, yamnet requires 16kHz mono audio
     try:
         waveform, _ = librosa.load(audio_folder / row["label"] / f"{song_id}.wav", sr=16000, mono=True)
+    # skip any song that can't be read (e.g. corrupted files) instead of crashing
     except Exception as e:
         print(f"skipped {song_id}: {e}")
         continue
+    # run the audio through yamnet
+    # yamnet returns 3 things: sound scores, embeddings, and its spectrogram - we only keep the embeddings
+    # embeddings are 1024 numbers describing what each ~1 second frame sounds like
     _, song_embeddings, _ = yamnet(waveform.astype(np.float32))
+    # average every frame together so each song gets one set of 1024 numbers
     embeddings.append(song_embeddings.numpy().mean(axis=0))
+    # keep the genre and train/val split lined up with each song's embedding
     labels.append(row["label"])
     splits.append(row["split"])
+    # print progress every 50 songs
     if n % 50 == 0:
         print(f"  {n}/{len(songs)} songs done")
 
+# convert the lists to numpy arrays so we can filter them by split
 embeddings = np.array(embeddings)
 labels = np.array(labels)
 splits = np.array(splits)
