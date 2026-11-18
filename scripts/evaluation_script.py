@@ -7,17 +7,19 @@
 # Written by Dawson Herrington to automated creation of model evaluation metrics through scikit
 
 # imports
-from datetime import datetime
-from pathlib import Path
-
+import numpy as np
 import pandas as pd
 import tensorflow as tf
+
+from datetime import datetime
+from pathlib import Path
 
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
     confusion_matrix,
     ConfusionMatrixDisplay,
+    log_loss,
 )
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
@@ -30,30 +32,40 @@ run = wandb.init(project="music-genre-classifier", job_type="evaluation")
 
 
 # load the saved model
-model_path = Path(__file__).parent.parent / "models" / "model.keras"
+#model_path = Path(__file__).parent.parent / "models" / "model.keras"
+#model = tf.keras.models.load_model(model_path)
+
+# load the saved model
+model_path = Path(__file__).parent.parent / "models" / "trained_models" / "mel_cnn.keras"
 model = tf.keras.models.load_model(model_path)
+genre_labels = list(np.load(model_path.parent / "genre_labels.npy"))
 
-# load in the test split
-csv_location = Path(__file__).parent.parent / "Data" / "gtzan_57_features_split.csv"
-df = pd.read_csv(csv_location)
-test_split = df[df["split"] == "test"].copy()
 
-# apply same scaler and label as Gianno used
-train_df = df[df["split"] == "train"]
-test_df = df[df["split"] == "test"]
+# load in the appropriate split
+mels_location = Path(__file__).parent.parent / "Data" / "gtzan_mels.npz"
+data = np.load(mels_location)
+#test_split = df[df["split"] == "test"].copy()
+test_split = data["split"] == "val"
 
-scaler = StandardScaler()
-feature_columns = [col for col in df.columns if col not in ["filename", "song_id", "segment", "label", "split"]]
-scaler.fit(train_df[feature_columns])
-x_test_scaled = scaler.transform(test_df[feature_columns])
+X_val = data["X"][test_split][..., np.newaxis].astype(np.float32)
+labels_val = data["label"][test_split]
+songs_val = data["song_id"][test_split]
 
-label_encoder = LabelEncoder()
-label_encoder.fit(train_df["label"])
-y_test_encoded = label_encoder.transform(test_df["label"])
+segment_predictions = model.predict(X_val, verbose=0)
+
+y_true = []
+song_predictions = []
+
+for song_id in np.unique(songs_val):
+    song_rows = songs_val == song_id
+    song_predictions.append(np.mean(segment_predictions[song_rows], axis=0))
+    y_true.append(genre_labels.index(labels_val[song_rows][0]))
+
+y_test_encoded = np.array(y_true)
+predictions = np.array(song_predictions)
 
 # generate metrics
-loss, accuracy = model.evaluate(x_test_scaled, y_test_encoded)
-predictions = model.predict(x_test_scaled)
+loss = log_loss(y_test_encoded, predictions)
 predicted_class_set =  predictions.argmax(axis=1)
 
 accuracy = accuracy_score(y_test_encoded, predicted_class_set)
@@ -61,7 +73,7 @@ accuracy = accuracy_score(y_test_encoded, predicted_class_set)
 loss_acc_output_string = f"Loss: {loss}, Accuracy: {accuracy}"
 output_matrix = confusion_matrix(y_test_encoded, predicted_class_set)
 
-class_report = classification_report(y_test_encoded, predicted_class_set, target_names=label_encoder.classes_)
+class_report = classification_report(y_test_encoded, predicted_class_set, target_names=genre_labels)
 
 # log metrics to wandb
 # After you have the metrics, log them
@@ -87,7 +99,7 @@ with open(folder / "wandb_link.txt", "w") as f:
     f.write(run.url)
 
 # generate confusion matrix .png to folder
-completed_matrix = ConfusionMatrixDisplay(output_matrix, display_labels=label_encoder.classes_)
+completed_matrix = ConfusionMatrixDisplay(output_matrix, display_labels=genre_labels)
 
 completed_matrix.plot()
 
