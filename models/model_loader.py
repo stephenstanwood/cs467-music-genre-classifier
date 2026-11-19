@@ -11,7 +11,7 @@ This script provides four reusable functions:
     * load_models()
     * get_active_models()
     * select_model(model_name)
-    * predict_genre(X, model_name, top_n=3)
+    * predict_genre(X, model_name, top_n=5)
 
 How to access:
     - from models.model_loader import *
@@ -76,10 +76,11 @@ def select_model(model_name):
     """Retrieve a loaded model by its name.
 
     Parameters:
-        - model_name: Name of the model.
-    
+        - model_name (str): Name of the model to select.
+            Do not include the ".keras" file extension.
+
     Returns:
-        The selected keras model.
+        tf.keras.Model: The selected loaded Keras model.
     """
     if model_name not in MODELS:
         raise ValueError("Model Not Found.")
@@ -89,16 +90,29 @@ def select_model(model_name):
 
 # ================= PREDICT GENRE =====================
 
-def predict_genre(X, model_name, top_n=3):
+def predict_genre(X, model_name, top_n=5):
     """
     Generate Top-N music genre predictions using a selected CNN model.
 
-    Supports either a single mel spectrogram or multiple slices
-    belonging to the same song.
+    Supports either a single mel spectrogram or multiple mel
+    spectrogram slices belonging to the same song.
+
+    Parameters:
+        X (numpy.ndarray): Preprocessed mel spectrogram input.
+            Accepts a single spectrogram or multiple slices.
+
+        model_name (str): Name of the trained model to use.
+
+        top_n (int): Number of top genre predictions to return.
+            Defaults to 5.
 
     Returns:
-        A list of dictionaries containing predicted genres
-        and their confidence scores as percentages.
+        list: A list of dictionaries containing predicted genre
+        names and confidence scores (0.0 to 1.0).
+
+    Notes:
+        When multiple slices are provided, predictions are
+        averaged across all slices to generate song-level results.
     """
 
     if model_name not in MODELS:
@@ -113,13 +127,11 @@ def predict_genre(X, model_name, top_n=3):
     if X.ndim == 3:
         X = np.expand_dims(X, axis=0)
 
-    # Predict every slice
     predictions = model.predict(X, verbose=0)
 
     # Average predictions across all slices
     predictions = np.mean(predictions, axis=0)
 
-    # Get Top-N genre indices
     top_indices = np.argsort(predictions)[::-1][:top_n]
 
     results = []
@@ -130,8 +142,8 @@ def predict_genre(X, model_name, top_n=3):
             "confidence": float(predictions[index])
         })
 
-    # Print predictions as percentages
     for result in results:
         print(f"{result['genre']}: {result['confidence']:.2%}")
 
     return results
+
