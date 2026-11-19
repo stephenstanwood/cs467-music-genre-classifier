@@ -14,7 +14,7 @@ Extract both into `data/raw/`. The resulting paths should include:
 For a new checkout, run these commands from the project folder:
 
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
@@ -95,23 +95,22 @@ These tests use a small generated cache and do not require the full dataset.
 
 ## Prediction API
 
-Start the server with:
+With the virtual environment active, start the server.
 
     python -m uvicorn app:app --reload
 
 Send an MP3 or WAV file to `POST /predict?n=5` using the multipart field
-`file`. The upload limit is 10 MB. The requested number of genres can
-range from 1 to 8, with 5 as the default.
+`file`. Clips must be at least 10 seconds long and no larger than 10 MB.
+You can request 1 to 8 genres. The default is 5.
 
 The route averages scores across segments and returns a `predictions`
 list containing `genre` and `confidence`, plus the number of `segments`.
 Confidence values range from zero to one. Selecting fewer genres does
 not rescale their scores.
 
-The saved model and matching preprocessing still need to be connected
-in `predict_file()`. Until then, requests that pass the upload checks
-return 503. Audio decoding, duration checks, and selection of the middle
-30 seconds remain part of that connection.
+The server loads the saved model and genre labels from
+`models/trained_models/`. For clips longer than 30 seconds, it uses the
+middle 30 seconds.
 
 Install the test dependencies and run all tests with:
 

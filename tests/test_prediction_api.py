@@ -75,7 +75,11 @@ class TestPredictionAPI(unittest.TestCase):
 
     def test_missing_model_returns_503(self):
         self.model_patch.stop()
-        response = self.client.post("/predict", files=self.upload)
+        with patch(
+            "scripts.prediction_api.load_prediction_model",
+            side_effect=FileNotFoundError,
+        ):
+            response = self.client.post("/predict", files=self.upload)
         self.assertEqual(response.status_code, 503)
 
     def test_missing_upload_is_rejected(self):

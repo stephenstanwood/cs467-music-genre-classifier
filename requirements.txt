@@ -8,3 +8,4 @@ uvicorn
 python-multipart
 wandb
 scikit-learn
+tensorflow==2.21.0

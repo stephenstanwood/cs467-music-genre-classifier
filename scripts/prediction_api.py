@@ -4,16 +4,17 @@
 #       Gianno Mari Rodriguez, Stephen Stanwood
 # Description: Accepts audio uploads and returns the top predicted genres.
 
+from datetime import datetime
+from functools import cache
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import librosa
-import soundfile as sf
-from datetime import datetime
 
+import librosa
 import numpy as np
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
-# error log path and helper
+from scripts.preprocessing.preprocess import mels_for_file
+
 ERROR_LOG_PATH = Path("Audio Upload Error Log") / "upload_errors.txt"
 ERROR_LOG_PATH.parent.mkdir(exist_ok=True)
 
@@ -30,10 +31,32 @@ class InvalidAudioError(ValueError):
     """The uploaded audio could not be processed."""
 
 
+@cache
+def load_prediction_model():
+    from tensorflow.keras.models import load_model
+
+    from models.model_loader import GENRE_LABELS, MODEL_FOLDER
+
+    model = load_model(MODEL_FOLDER / "mel_cnn.keras", compile=False)
+    return model, GENRE_LABELS.tolist()
+
+
 def predict_file(path):
-    # Connect the saved model and shared preprocessing here.
-    # This will return genre names and one probability row per segment.
-    raise HTTPException(503, "The prediction model is not ready.")
+    try:
+        model, genres = load_prediction_model()
+    except (ImportError, OSError, ValueError) as error:
+        raise HTTPException(
+            503, "The prediction model is not ready."
+        ) from error
+
+    try:
+        mels = mels_for_file(path)
+    except ValueError as error:
+        raise InvalidAudioError() from error
+
+    # Add the channel axis the model expects.
+    scores = model(mels[..., np.newaxis], training=False).numpy()
+    return genres, scores
 
 
 def rank_predictions(genres, scores, n):
@@ -73,18 +96,15 @@ def rank_predictions(genres, scores, n):
 @router.post("/predict")
 def predict(file: UploadFile = File(...), n: int = Query(5, ge=1, le=8)):
 
-    # check for file presence
     if not file or not file.filename:
         log_upload_error("No audio file was uploaded.")
         raise HTTPException(400, "No audio file was uploaded.")
 
-    # check for file type
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in {".mp3", ".wav"}:
         log_upload_error(f"Invalid file type: {file.filename}")
         raise HTTPException(400, "Please upload an MP3 or WAV file.")
 
-    # check for file size
     audio = file.file.read(MAX_UPLOAD_BYTES + 1)
     if len(audio) > MAX_UPLOAD_BYTES:
         log_upload_error(f"File too large: {file.filename}")
@@ -97,35 +117,24 @@ def predict(file: UploadFile = File(...), n: int = Query(5, ge=1, le=8)):
     with TemporaryDirectory() as directory:
         path = Path(directory) / ("upload" + suffix)
         path.write_bytes(audio)
-        
-        # upload validation
 
-        # check for readability
         try:
             audio_sig, sample_rate = librosa.load(path, sr=None, mono=True)
         except Exception:
             log_upload_error(f"Error loading audio file: {file.filename}")
             raise HTTPException(400, "The audio file is unreadable or may be corrupted.")
 
-        # check for appropriate length over 10 sec
         audio_length = librosa.get_duration(y=audio_sig, sr=sample_rate)
         if audio_length < 10.0:
             log_upload_error(f"Audio file too short: {file.filename}")
             raise HTTPException(400, "The audio file must be at least 10 seconds long.")
 
-        # trim the audio to middle 30 seconds if longer than 30
-        if audio_length > 30.0:
-            start = (audio_length - 30.0) / 2
-            end = start + 30.0
-            audio_sig = audio_sig[int(start * sample_rate):int(end * sample_rate)]
-            sf.write(path, audio_sig, sample_rate)
-
-        # pass the audio to the model
-        try: 
+        # The shared preprocessing takes the middle 30 seconds.
+        try:
             genres, scores = predict_file(path)
         except InvalidAudioError:
             log_upload_error(f"Error processing audio file: {file.filename}")
-            raise HTTPException(400, "The audio file could not be processed.") 
+            raise HTTPException(400, "The audio file could not be processed.")
 
     try:
         result = rank_predictions(genres, scores, n)
