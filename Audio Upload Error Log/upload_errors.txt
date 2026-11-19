@@ -1,0 +1,7 @@
+[2026-11-19 03:57:23] Audio file too short: song.wav
+[2026-11-19 03:57:23] Error loading audio file: song.wav
+[2026-11-19 03:57:23] Empty file: song.wav
+[2026-11-19 03:57:23] Audio file too short: song.wav
+[2026-11-19 03:57:23] File too large: song.wav
+[2026-11-19 03:57:23] Invalid file type: song.txt
+[2026-11-19 03:57:23] Error loading audio file: song.mp3
