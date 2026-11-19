@@ -6,7 +6,10 @@ from tensorflow.keras import (
     models, 
     layers, 
     regularizers)
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import (
+    EarlyStopping,
+    ReduceLROnPlateau,
+    ModelCheckpoint)
 from sklearn.model_selection import train_test_split, GroupShuffleSplit
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -339,6 +342,189 @@ def build_mel_cnn(num_classes=10):
     return model
 
 
+def build_mel_cnn_v2(num_classes=10):
+    """
+    Build and compile an improved Convolutional Neural Network (CNN)
+    for music genre classification using mel spectrograms.
+
+    Parameters:
+        num_classes (int): Number of genre classes to predict.
+            Determines the number of neurons in the output layer.
+            Defaults to 10.
+
+    Returns:
+        A compiled Keras Functional API model using the Adam optimizer,
+        sparse categorical cross-entropy loss, and accuracy metric.
+
+    Settings:
+
+        # Input Shape:
+            - (128, 130, 1)
+            - 128 mel frequency bins
+            - 130 time frames
+            - 1 channel (grayscale spectrogram)
+
+        # Convolutional Blocks:
+
+            # Block 1:
+                - Two Conv2D layers with 32 filters each.
+                - MaxPooling2D (2x2).
+
+            # Block 2:
+                - Two Conv2D layers with 64 filters each.
+                - MaxPooling2D (2x2).
+
+            # Block 3:
+                - Two Conv2D layers with 128 filters each.
+                - MaxPooling2D (2x2).
+
+        # Convolution Settings:
+            - Kernel size: 3x3
+            - Padding: 'same' (preserves spatial dimensions).
+            - L2 Regularization: 0.0001.
+
+        # Batch Normalization:
+            - Applied after each convolutional layer.
+            - Normalizes layer activations to help stabilize training.
+
+        # ReLU:
+            - Applied after batch normalization.
+            - Introduces non-linearity into the network.
+
+        # MaxPooling:
+            - Reduces spatial dimensions by half after each block.
+            - Helps retain important features while reducing computation.
+
+        # Global Pooling:
+            - GlobalAveragePooling2D extracts average feature activations.
+            - GlobalMaxPooling2D extracts maximum feature activations.
+            - Both outputs are concatenated before classification.
+
+        # Classification Head:
+            - Dense layer with 128 neurons.
+            - ReLU activation.
+            - L2 Regularization: 0.0001.
+            - Dropout: 0.35 (randomly drops 35% of activations during training).
+
+        # Output Layer:
+            - Dense layer with num_classes neurons.
+            - Softmax activation for genre probability predictions.
+
+        # Optimizer: Adam
+            - Learning Rate: 0.0005.
+
+        # Loss Function:
+            - Sparse Categorical Cross-Entropy.
+
+        # Metrics:
+            - Accuracy.
+
+    References:
+        Keras, Convolutional Neural Network (CNN).
+        Keras, Functional API.
+        Keras, Convolutional Layers.
+        Keras, Pooling Layers.
+        Keras, Regularizers.
+    """
+
+    reg = regularizers.l2(0.0001)
+
+    inputs = layers.Input(shape=(128, 130, 1))
+
+    # Block 1
+    x = layers.Conv2D(
+        32, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(inputs)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.Conv2D(
+        32, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.MaxPooling2D((2, 2))(x)
+
+    # Block 2
+    x = layers.Conv2D(
+        64, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.Conv2D(
+        64, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.MaxPooling2D((2, 2))(x)
+
+    # Block 3
+    x = layers.Conv2D(
+        128, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.Conv2D(
+        128, (3, 3),
+        padding="same",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.MaxPooling2D((2, 2))(x)
+
+    # Classification
+    avg_pool = layers.GlobalAveragePooling2D()(x)
+    max_pool = layers.GlobalMaxPooling2D()(x)
+
+    x = layers.Concatenate()([avg_pool, max_pool])
+
+    x = layers.Dense(
+        128,
+        activation="relu",
+        kernel_regularizer=reg
+    )(x)
+
+    x = layers.Dropout(0.35)(x)
+
+    outputs = layers.Dense(
+        num_classes,
+        activation="softmax"
+    )(x)
+
+    model = models.Model(inputs, outputs)
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(
+            learning_rate=0.0005
+        ),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    return model
+
 def callbacks():
     """
     Initializes early stopping and learning rate reduction callbacks.
@@ -364,6 +550,44 @@ def callbacks():
     )
 
     return [early_stopping, reduce_lr]
+
+
+def callbacks_v2():
+    """
+    Initializes early stopping, learning rate reduction,
+    and model checkpoint callbacks.
+
+    Returns:
+        list: EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+    """
+
+    early_stopping = EarlyStopping(
+        monitor="val_loss",
+        patience=8,
+        restore_best_weights=True,
+        verbose=1
+    )
+
+    reduce_lr = ReduceLROnPlateau(
+        monitor="val_loss",
+        factor=0.5,
+        patience=3,
+        min_lr=1e-6,
+        verbose=1
+    )
+
+    model_checkpoint = ModelCheckpoint(
+        filepath="best_mel_cnn_v2.keras",
+        monitor="val_loss",
+        save_best_only=True,
+        verbose=1
+    )
+
+    return [
+        early_stopping,
+        reduce_lr,
+        model_checkpoint
+    ]
 
 
 def get_class_weights(labels_encoded):
