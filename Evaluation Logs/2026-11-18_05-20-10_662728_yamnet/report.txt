@@ -1,0 +1,19 @@
+YAMNet + LogisticRegression (song-level, val split)
+Loss: 0.35463404655456543, Accuracy: 0.89
+
+              precision    recall  f1-score   support
+
+       blues       0.82      0.90      0.86        10
+   classical       0.90      0.90      0.90        10
+     country       0.77      1.00      0.87        10
+       disco       0.88      0.70      0.78        10
+      hiphop       0.83      1.00      0.91        10
+        jazz       1.00      0.80      0.89        10
+       metal       1.00      1.00      1.00        10
+         pop       0.91      1.00      0.95        10
+      reggae       0.91      1.00      0.95        10
+        rock       1.00      0.60      0.75        10
+
+    accuracy                           0.89       100
+   macro avg       0.90      0.89      0.89       100
+weighted avg       0.90      0.89      0.89       100
