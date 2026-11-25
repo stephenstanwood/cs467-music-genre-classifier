@@ -37,7 +37,7 @@ def load_prediction_model():
 
     from models.model_loader import GENRE_LABELS, MODEL_FOLDER
 
-    model = load_model(MODEL_FOLDER / "mel_cnn.keras", compile=False)
+    model = load_model(MODEL_FOLDER / "mel_cnn_v7.keras", compile=False)
     return model, GENRE_LABELS.tolist()
 
 
