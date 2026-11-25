@@ -4,6 +4,7 @@
 #       Gianno Mari Rodriguez, Stephen Stanwood
 # Description: Accepts audio uploads and returns the top predicted genres.
 
+import logging
 from datetime import datetime
 from functools import cache
 from pathlib import Path
@@ -16,12 +17,17 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from scripts.preprocessing.preprocess import mels_for_file
 
 ERROR_LOG_PATH = Path("Audio Upload Error Log") / "upload_errors.txt"
-ERROR_LOG_PATH.parent.mkdir(exist_ok=True)
+logger = logging.getLogger(__name__)
+
 
 def log_upload_error(message: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(ERROR_LOG_PATH, "a") as f:
-        f.write(f"[{timestamp}] {message}\n")
+    try:
+        ERROR_LOG_PATH.parent.mkdir(exist_ok=True)
+        with ERROR_LOG_PATH.open("a") as log_file:
+            log_file.write(f"[{timestamp}] {message}\n")
+    except OSError:
+        logger.warning("%s", message)
 
 router = APIRouter()
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
