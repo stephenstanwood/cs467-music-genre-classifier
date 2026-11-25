@@ -9,6 +9,8 @@ const statusText = document.getElementById("spectrogram-status");
 const errorMessage = document.getElementById("error-message");
 const loadingMessage = document.getElementById("loading-message");
 const trackName = document.getElementById("track-name");
+const genreList = document.querySelector(".genre-list");
+const predictionStatus = document.getElementById("prediction-status");
 
 const waveformPlayer = document.getElementById("waveform-player");
 const waveform = document.getElementById("waveform");
@@ -184,6 +186,8 @@ fileInput.addEventListener("change", () => {
   errorMessage.hidden = true;
   spectrogramImage.hidden = true;
   spectrogramImage.removeAttribute("src");
+  genreList.hidden = true;
+  predictionStatus.textContent = "Select Analyze track to get predictions.";
   analyzeButton.disabled = !file || working;
 
   // Free the old temporary link before making another one.
@@ -211,6 +215,41 @@ fileInput.addEventListener("change", () => {
   statusText.textContent = "Ready to analyze: " + file.name;
 });
 
+async function showPredictions(file, formData, previewUrl) {
+  if (!/\.(mp3|wav)$/i.test(file.name)) {
+    predictionStatus.textContent = "Use MP3 or WAV for genre predictions.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/predict?n=5", { method: "POST", body: formData });
+    const result = await response.json().catch(() => ({}));
+    if (audioUrl !== previewUrl) return;
+
+    const rows = genreList.querySelectorAll(".genre-item");
+    if (!response.ok || result.predictions?.length !== rows.length) {
+      predictionStatus.textContent = typeof result.detail === "string"
+        ? result.detail
+        : "Unable to predict genres.";
+      return;
+    }
+
+    rows.forEach((row, index) => {
+      const prediction = result.predictions[index];
+      const score = prediction.confidence * 100;
+      row.querySelector(".genre-label span").textContent = prediction.genre;
+      row.querySelector(".genre-label strong").textContent = score.toFixed(1) + "%";
+      row.querySelector(".score-fill").style.width = score + "%";
+    });
+    genreList.hidden = false;
+    predictionStatus.textContent = "Five predictions ranked by model score.";
+  } catch {
+    if (audioUrl === previewUrl) {
+      predictionStatus.textContent = "Unable to predict genres.";
+    }
+  }
+}
+
 // When Analyze is clicked, send the audio to Python.
 analyzeButton.addEventListener("click", async () => {
   const file = fileInput.files[0];
@@ -223,10 +262,13 @@ analyzeButton.addEventListener("click", async () => {
   errorMessage.hidden = true;
   spectrogramImage.hidden = true;
   statusText.textContent = "Python is creating the Mel spectrogram…";
+  genreList.hidden = true;
+  predictionStatus.textContent = "";
 
   // FormData lets us upload the file without converting it ourselves.
   const formData = new FormData();
   formData.append("file", file);
+  const predictionRequest = showPredictions(file, formData, previewUrl);
 
   try {
     // FastAPI receives the file at /spectrogram and returns a PNG image.
@@ -258,7 +300,8 @@ analyzeButton.addEventListener("click", async () => {
     errorMessage.querySelector("p").textContent = error.message;
     statusText.textContent = "Spectrogram generation failed. Make sure the Python server is running.";
   } finally {
-    // Restore the button and hide the loading indicator.
+    // Restore the button after both requests finish.
+    await predictionRequest;
     working = false;
     loadingMessage.hidden = true;
     analyzeButton.disabled = !fileInput.files.length;
