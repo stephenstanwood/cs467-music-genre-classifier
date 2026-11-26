@@ -1,0 +1,3 @@
+{
+  "buildCommand": "mkdir -p _vendor/librosa && cp \"$VIRTUAL_ENV\"/lib/python*/site-packages/librosa/__init__.pyi _vendor/librosa/"
+}
